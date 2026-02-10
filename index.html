@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PA-Assist | Incentivi Comuni</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs" defer></script>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans">
+
+    <div x-data="app()" class="min-h-screen">
+        <header class="py-10 text-center">
+            <h1 class="text-4xl font-black text-blue-700">PA-Assist <span class="text-slate-400 font-light">3.0</span></h1>
+            <p class="mt-2 text-slate-500">Trova i fondi per il tuo Comune (Conto Termico 3.0 & Bandi)</p>
+        </header>
+
+        <main class="max-w-4xl mx-auto px-4">
+            <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-200 mb-10">
+                <label class="block text-center text-lg font-bold mb-4">Seleziona il tuo Comune</label>
+                <div class="relative">
+                    <input 
+                        type="text" 
+                        x-model="search" 
+                        @input="filterComuni()"
+                        placeholder="Inizia a scrivere il nome del comune..." 
+                        class="w-full p-4 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none text-xl transition-all"
+                    >
+                    <div x-show="suggestions.length > 0" class="absolute z-10 w-full bg-white border rounded-xl shadow-lg mt-2">
+                        <template x-for="c in suggestions">
+                            <div @click="selectComune(c)" class="p-4 hover:bg-blue-50 cursor-pointer border-b last:border-0" x-text="c.nome + ' (' + c.prov + ')'"></div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <template x-if="selectedComune">
+                <div class="animate-fade-in">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold">Opportunità per <span x-text="selectedComune.nome"></span></h2>
+                        <div class="bg-blue-100 text-blue-700 px-4 py-1 rounded-full text-sm font-bold">
+                            Zona Climatica: <span x-text="selectedComune.zona"></span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <template x-for="opt in opportunities">
+                            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
+                                <div class="flex justify-between items-start mb-4">
+                                    <span class="bg-green-100 text-green-700 text-xs font-black px-2 py-1 rounded uppercase" x-text="opt.tipo"></span>
+                                    <span class="text-blue-600 font-bold" x-text="opt.incentivo"></span>
+                                </div>
+                                <h3 class="text-xl font-bold mb-2" x-text="opt.titolo"></h3>
+                                <p class="text-slate-500 text-sm mb-6" x-text="opt.desc"></p>
+                                <button @click="alert('Stai per sbloccare il Kit per ' + selectedComune.nome + '. Prezzo: €149')" class="w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-blue-600 transition-all">
+                                    Scarica Kit Pratica 📄
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+        </main>
+    </div>
+
+    <script>
+        function app() {
+            return {
+                search: '',
+                selectedComune: null,
+                suggestions: [],
+                // Database integrato (puoi espanderlo)
+                comuni: [
+                    { nome: "Bagnolo Mella", prov: "BS", zona: "E", pop: 12000 },
+                    { nome: "Milano", prov: "MI", zona: "E", pop: 1300000 },
+                    { nome: "Roma", prov: "RM", zona: "D", pop: 2800000 },
+                    { nome: "Napoli", prov: "NA", zona: "C", pop: 900000 },
+                    { nome: "Cortina d'Ampezzo", prov: "BL", zona: "F", pop: 5000 }
+                ],
+                // Regole Bandi
+                bandi: [
+                    { id: 1, titolo: "Conto Termico 3.0 - Pompe di Calore", desc: "Sostituzione integrale impianti termici scuole e uffici.", incentivo: "65%", tipo: "Sportello", zone: ['E', 'F'] },
+                    { id: 2, titolo: "Illuminazione Pubblica LED", desc: "Efficientamento lampioni e quadri elettrici comunali.", incentivo: "50%", tipo: "Bando", zone: ['C', 'D', 'E', 'F'] },
+                    { id: 3, titolo: "Caldaie a Biomassa PA", desc: "Sostituzione caldaie a gasolio in zone montane.", incentivo: "80%", tipo: "Sportello", zone: ['F'] }
+                ],
+                filterComuni() {
+                    if (this.search.length < 2) { this.suggestions = []; return; }
+                    this.suggestions = this.comuni.filter(c => c.nome.toLowerCase().includes(this.search.toLowerCase()));
+                },
+                selectComune(comune) {
+                    this.selectedComune = comune;
+                    this.search = comune.nome;
+                    this.suggestions = [];
+                },
+                get opportunities() {
+                    if (!this.selectedComune) return [];
+                    return this.bandi.filter(b => b.zone.includes(this.selectedComune.zona));
+                }
+            }
+        }
+    </script>
+</body>
+</html>
